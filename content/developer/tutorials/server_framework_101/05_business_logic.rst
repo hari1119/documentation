@@ -6,13 +6,11 @@ tmp
 
 .. todo: constraints, defaults, onchanges, computes
 .. todo: model actions ("assign myself as salesperson" action, "view offers" statbutton)
-.. todo: salesperson_id = fields.Many2one(default=lambda self: self.env.user)
 .. todo: explain the env (self.env.cr, self.env.uid, self.env.user, self.env.context, self.env.ref(xml_id), self.env[model_name])
 .. todo: explain the thing about `self`
 .. todo: explain magic commands
 .. todo: copy=False on some fields
-
-.. todo: introduce lambda functions for defaults
+.. todo: introduce lambda functions for defaults :point_down:
 
 There is a problem with the way we defined our Date fields: their default value relies on
 :code:`fields.Date.today()` or some other static method. When the code is loaded into memory, the
@@ -23,6 +21,9 @@ much more visible with Datetime fields, as all newly created records would share
 That's where lambda functions come in handy. As they generate an anonymous function each time
 they're evaluated at runtime, they can be used in the computation of default field values to return
 an updated value for each new record.
+
+.. todo: salesperson_id = fields.Many2one(default=lambda self: self.env.user)
+.. todo: real.estate.offer.amount -> default = property.selling_price
 
 .. todo: odoo-bin shell section
 

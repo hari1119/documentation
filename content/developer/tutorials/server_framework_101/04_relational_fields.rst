@@ -177,10 +177,12 @@ our app's capabilities by adding new models to manage additional information. Th
 naturally leads us to an important question: How will our `real.estate.property` model connect to
 these new models?
 
-In relational databases, including Odoo's, **many-to-one** relationships play a crucial role. These
+In relational databases, including Odoo's, **many-to-one relationships** play a crucial role. These
 relationships allow you to link *multiple* records in one model to a *single* record in another
-model. In Odoo, many-to-one relationships are established by adding a `Many2one` field to the model
-representing the *many* side of the relationship. In practice, the field is represented by a
+model.
+
+In Odoo, many-to-one relationships are established by adding a `Many2one` field to the model
+representing the *many* side of the relationship. The field is represented in the database by a
 `foreign key <https://en.wikipedia.org/wiki/Foreign_key>`_ that references the ID of the connected
 record. By convention, `Many2one` field names end with the `_id` suffix, indicating that they store
 the referenced record's ID.
@@ -207,8 +209,8 @@ the referenced record's ID.
           )
 
       class ProductCategory(models.Model):
-          _name = 'product'
-          _category = "Product Category"
+          _name = 'product.category'
+          _description = "Product Category"
 
           name = fields.Char(string="Name")
 
@@ -381,17 +383,17 @@ managing property types.
                   <field name="type_id"/>
                   [...]
               </tree>
-          </field>
+          [...]
       </record>
 
       <record id="real_estate.property_form" model="ir.ui.view">
           [...]
-                          <group string="Listing Information">
-                              <field name="type_id"/>
-                              <field name="selling_price"/>
-                              <field name="availability_date"/>
-                              <field name="active"/>
-                          </group>
+              <group string="Listing Information">
+                  <field name="type_id"/>
+                  <field name="selling_price"/>
+                  <field name="availability_date"/>
+                  <field name="active"/>
+              </group>
           [...]
       </record>
 
@@ -402,7 +404,7 @@ managing property types.
                   <filter name="group_by_state" context="{'group_by': 'state'}"/>
                   <filter name="group_by_type" context="{'group_by': 'type_id'}"/>
               </search>
-          </field>
+          [...]
       </record>
 
    .. code-block:: xml
@@ -459,7 +461,7 @@ of the property and the salesperson managing the property.
       - Salesperson: The employee of the real estate agency overseeing the sale of the property.
 
    #. Modify the form view of properties to include a notebook component. The property description
-      should be in the first tab, and the two new fields should be in the second tab.
+      should be in the first page, and the two new fields should be in the second page.
 
    .. tip::
       You don't need to define any new UI component to browse the seller you assigned to your
@@ -480,25 +482,23 @@ of the property and the salesperson managing the property.
 
       <record id="real_estate.property_form" model="ir.ui.view">
           [...]
-                      <notebook>
-                          <page string="Description">
-                              <field
-                                  name="description"
-                                  placeholder="Write a description about this property."
-                              />
-                          </page>
-                          <page string="Other Info">
-                              <group>
-                                  <group>
-                                      <field name="seller_id"/>
-                                      <field name="salesperson_id"/>
-                                  </group>
-                              </group>
-                          </page>
-                      </notebook>
-                  </sheet>
-              </form>
-          </field>
+              <notebook>
+                  <page string="Description">
+                      <field
+                          name="description"
+                          placeholder="Write a description about this property."
+                      />
+                  </page>
+                  <page string="Other Info">
+                      <group>
+                          <group>
+                              <field name="seller_id"/>
+                              <field name="salesperson_id"/>
+                          </group>
+                      </group>
+                  </page>
+              </notebook>
+          [...]
       </record>
 
    .. code-block:: xml
@@ -558,51 +558,250 @@ of the property and the salesperson managing the property.
 One-to-many
 ===========
 
-One2Many fields are the inverse of Many2One fields. They allow you to display and manage multiple related records from the "one" side of the relationship. Let's add a One2Many field to our real.estate.property.type model to show all properties of a certain type:
+After exploring how to connect multiple records to a single one with many-to-one relationships,
+let's consider their counterparts: **one-to-many relationships**. These relationships represent the
+inverse of the many-to-one relationships we just discussed, enabling a *single* record in one model
+to be associated with *multiple* records in another model.
 
-By convention, one2many fields have the _ids suffix.
+In Odoo, one-to-many relationships are established by adding a `One2many` field to the model
+representing the *one* side of an already existing many-to-one relationship. It's important to note
+that `One2many` fields don't store data in the database; instead, they provide a virtual field that
+Odoo computes based on the referenced `Many2one` field. By convention, `One2many` field names end
+with the `_ids` suffix, indicating that they allow accessing the IDs of the connected records.
 
 .. seealso::
    :ref:`Reference documentation for One2many fields <reference/fields/one2many>`
 
+.. example::
+   In the example below, a `One2many` field is added to the `product.category` model to allow quick
+   access to the connected products from the product category.
+
+   .. code-block:: py
+
+      from odoo import fields, models
+
+
+      class Product(models.Model):
+          _name = 'product'
+          _description = "Storable Product"
+
+          [...]
+          category_id = fields.Many2one(
+              string="Category", comodel_name='product.category', ondelete='restrict', required=True
+          )
+
+      class ProductCategory(models.Model):
+          _name = 'product.category'
+          _description = "Product Category"
+
+          name = fields.Char(string="Name")
+          product_ids = fields.One2many(
+              string="Products", comodel_name='product', inverse_name='category_id'
+          )
+
+   .. note::
+
+      The `One2many` field must reference its `Many2one` counterpart through the `inverse_name`
+      argument.
+
+A good use case for a one-to-many relationship in our real estate app would be to connect properties
+to a list of offers received from potential buyers.
+
 .. exercise::
 
-   #. add `real.estate.offer` model with menu item, action, and list and form views (search?)
-   #. no menu or action required
-   #. add Many2one and One2many fields to connect to the `real.estate.property` model
-   #. add the field to the form view of properties in a new Offers notebook page
+   #. Create a new `real.estate.offer` model. It should have the following fields:
+
+      - Amount (required): The amount offered to buy the property.
+      - Buyer (required): The person making the offer.
+      - Date (required; default to creation date): When the offer was made.
+      - Validity (default to 7): The number of days before the offer expires.
+      - State (required): Either "Waiting", "Accepted", or "Refused".
+
+   #. Allow connecting properties to multiple offers.
+   #. Create a list and form views for the `real.estate.offer` model. It's not necessary to create
+      menu items or actions, as offers will be accessible from properties, but feel free to do it
+      anyway!
+   #. Modify the form view of properties to display offers in a new notebook page titled "Offers".
 
 .. spoiler:: Solution
 
    .. code-block:: python
-      :caption: `__manifest__.py`
+      :caption: `real_estate_offer.py`
+
+      from odoo import fields, models
+
+
+      class RealEstateOffer(models.Model):
+          _name = 'real.estate.offer'
+          _description = "Real Estate Offer"
+
+          amount = fields.Float(string="Amount", required=True)
+          buyer_id = fields.Many2one(string="Buyer", comodel_name='res.partner', required=True)
+          date = fields.Date(string="Date", required=True, default=fields.Date.today())
+          validity = fields.Integer(
+              string="Validity", help="The number of days before the offer expires.", default=7
+          )
+          state = fields.Selection(
+              string="State",
+              selection=[
+                  ('waiting', "Waiting"),
+                  ('accepted', "Accepted"),
+                  ('refused', "Refused"),
+              ],
+              required=True,
+              default='waiting',
+          )
+          property_id = fields.Many2one(
+              string="Property", comodel_name='real.estate.property', required=True
+          )
+
+   .. code-block:: python
+      :caption: `__init__.py`
       :emphasize-lines: 1
 
-      todo
+      from . import real_estate_offer
+      from . import real_estate_property
+      from . import real_estate_property_type
 
-.. exercise::
+   .. code-block:: csv
+      :caption: `ir.model.access.csv`
+      :emphasize-lines: 2
 
-   #. add M2O field on the `real.estate.offer` model to the `res.partner` model
+      id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+      real_estate_offer_system,real.estate.offer.system,model_real_estate_offer,base.group_system,1,1,1,1
+      real_estate_property_system,real.estate.property.system,model_real_estate_property,base.group_system,1,1,1,1
+      real_estate_property_type_system,real.estate.property.type.system,model_real_estate_property_type,base.group_system,1,1,1,1
 
-.. spoiler:: Solution
+   .. code-block:: py
+      :caption: `real_estate_property.py`
+      :emphasize-lines: 4-6
+
+      class RealEstateProperty(models.Model):
+          _name = 'real.estate.property'
+          [...]
+          offer_ids = fields.One2many(
+              string="Offers", comodel_name='real.estate.offer', inverse_name='property_id'
+          )
+
+   .. code-block:: xml
+      :caption: `real_estate_offer_views.xml`
+
+      <?xml version="1.0" encoding="utf-8"?>
+      <odoo>
+
+          <record id="real_estate.offer_list" model="ir.ui.view">
+              <field name="name">Offer List</field>
+              <field name="model">real.estate.offer</field>
+              <field name="arch" type="xml">
+                  <tree>
+                      <field name="amount"/>
+                      <field name="buyer_id"/>
+                      <field name="date"/>
+                      <field name="validity"/>
+                      <field name="state"/>
+                  </tree>
+              </field>
+          </record>
+
+          <record id="real_estate.offer_form" model="ir.ui.view">
+              <field name="name">Offer Form</field>
+              <field name="model">real.estate.offer</field>
+              <field name="arch" type="xml">
+                  <form>
+                      <sheet>
+                          <group>
+                              <group>
+                                  <field name="amount"/>
+                                  <field name="buyer_id"/>
+                                  <field name="state"/>
+                              </group>
+                              <group>
+                                  <field name="date"/>
+                                  <field name="validity"/>
+                              </group>
+                          </group>
+                      </sheet>
+                  </form>
+              </field>
+          </record>
+
+      </odoo>
 
    .. code-block:: python
       :caption: `__manifest__.py`
-      :emphasize-lines: 1
+      :emphasize-lines: 3
 
-      todo
+      'data': [
+          [...]
+          'views/real_estate_offer_views.xml',
+          'views/real_estate_property_views.xml',
+          'views/real_estate_property_type_views.xml',
+    ],
+
+   .. code-block:: xml
+      :caption: `real_estate_property_views.xml`
+      :emphasize-lines: 3-5
+
+      <record id="real_estate.property_form" model="ir.ui.view">
+          [...]
+              <page string="Offers">
+                  <field name="offer_ids"/>
+              </page>
+          [...]
+      </record>
 
 .. _tutorials/server_framework_101/many2many:
 
 Many-to-many
 ============
 
-Many2Many relationships allow for complex associations where multiple records from one model can be linked to multiple records from another model. Let's add a Many2Many field to our real.estate.property model to associate multiple tags with each property:
+After the many-to-one and one-to-many relationships, let's consider a more complex use case:
+**many-to-many relationships**. These relationships enable *multiple* records in one model to be
+associated with *multiple* records in another model, creating a bidirectional connection between
+sets of records.
 
-By convention, many2many fields have the _ids suffix.
+In Odoo, many-to-many relationships are established by adding a `Many2many` field to one or both of
+the models. The server framework implements many-to-many relationships by automatically creating an
+intermediate (junction) table in the database. This table stores pairs of IDs, each pair
+representing a connection between a record of the first model and a record of the second model. By
+convention, `Many2many` field names end with the `_ids` suffix, like for `One2many` fields.
 
 .. seealso::
    :ref:`Reference documentation for Many2many fields <reference/fields/many2many>`
+
+.. example::
+   In the example below, a many-to-many relationship is established between the `product` model and
+   the `res.partner` model, which is used to represent sellers offering products for sale.
+
+   .. code-block:: py
+
+      from odoo import fields, models
+
+
+      class Product(models.Model):
+          _name = 'product'
+          _description = "Storable Product"
+
+          [...]
+          seller_ids = fields.Many2many(
+              string="Sellers",
+              help="The sellers offering the product for sale.",
+              comodel_name='res.partner',
+              relation='product_seller_rel',
+              column1='product_id',
+              column2='partner_id',
+          )
+
+   .. note::
+
+      - It is not necessary to add a `Many2one` field to both models of the relationship.
+      - The optional `relation`, `column1`, and `column2` field arguments allow specifying the name
+        of the junction table and of its columns.
+
+
+
+
+Let's add a Many2Many field to our real.estate.property model to associate multiple tags with each property.
 
 .. exercise::
 

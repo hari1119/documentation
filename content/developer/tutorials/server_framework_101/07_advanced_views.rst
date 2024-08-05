@@ -1,5 +1,5 @@
 =========================
-Chapter X: Advanced views
+Chapter 7: Advanced views
 =========================
 
 tmp

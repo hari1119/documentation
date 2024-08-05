@@ -1,6 +1,6 @@
-==================================
-Chapter 9: Ready For Some Action?
-==================================
+===========================
+Old: Ready For Some Action?
+===========================
 
 So far we have mostly built our module by declaring fields and views. We just introduced business
 logic in the :doc:`previous chapter <08_compute_onchange>` thanks to
