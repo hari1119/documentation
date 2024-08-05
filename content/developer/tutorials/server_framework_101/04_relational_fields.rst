@@ -367,6 +367,7 @@ managing property types.
 
    .. code-block:: py
       :caption: `real_estate_property.py`
+      :emphasize-lines: 1-3
 
       type_id = fields.Many2one(
           string="Type", comodel_name='real.estate.property.type', ondelete='restrict', required=True
@@ -617,10 +618,10 @@ to a list of offers received from potential buyers.
       - Validity (default to 7): The number of days before the offer expires.
       - State (required): Either "Waiting", "Accepted", or "Refused".
 
-   #. Allow connecting properties to multiple offers.
    #. Create a list and form views for the `real.estate.offer` model. It's not necessary to create
       menu items or actions, as offers will be accessible from properties, but feel free to do it
       anyway!
+   #. Allow connecting properties to multiple offers.
    #. Modify the form view of properties to display offers in a new notebook page titled "Offers".
 
 .. spoiler:: Solution
@@ -671,17 +672,6 @@ to a list of offers received from potential buyers.
       real_estate_offer_system,real.estate.offer.system,model_real_estate_offer,base.group_system,1,1,1,1
       real_estate_property_system,real.estate.property.system,model_real_estate_property,base.group_system,1,1,1,1
       real_estate_property_type_system,real.estate.property.type.system,model_real_estate_property_type,base.group_system,1,1,1,1
-
-   .. code-block:: py
-      :caption: `real_estate_property.py`
-      :emphasize-lines: 4-6
-
-      class RealEstateProperty(models.Model):
-          _name = 'real.estate.property'
-          [...]
-          offer_ids = fields.One2many(
-              string="Offers", comodel_name='real.estate.offer', inverse_name='property_id'
-          )
 
    .. code-block:: xml
       :caption: `real_estate_offer_views.xml`
@@ -736,7 +726,15 @@ to a list of offers received from potential buyers.
           'views/real_estate_offer_views.xml',
           'views/real_estate_property_views.xml',
           'views/real_estate_property_type_views.xml',
-    ],
+      ],
+
+   .. code-block:: py
+      :caption: `real_estate_property.py`
+      :emphasize-lines: 1-3
+
+      offer_ids = fields.One2many(
+          string="Offers", comodel_name='real.estate.offer', inverse_name='property_id'
+      )
 
    .. code-block:: xml
       :caption: `real_estate_property_views.xml`
@@ -798,16 +796,27 @@ convention, `Many2many` field names end with the `_ids` suffix, like for `One2ma
       - The optional `relation`, `column1`, and `column2` field arguments allow specifying the name
         of the junction table and of its columns.
 
-
-
-
-Let's add a Many2Many field to our real.estate.property model to associate multiple tags with each property.
+Let's conclude this extension of the model family by allowing to associate multiple description tags
+with each property.
 
 .. exercise::
 
-   #. add a `real.estate.tag` model (cozy, renovated...) with `name` and `color` with menu item, action, and list-only views
-   #. add M2M field to the `real.estate.property` and `real.estate.tag` models
-   #. add the field to the form view of properties with many2many_tags widget
+   #. Create a new `real.estate.tag` model. It should have the following fields:
+
+      - Name (required): The label of the tag.
+      - Color: The color code to use for the tag, as an integer.
+
+   #. In a data file, describe various default property tags. For example, "Renovated".
+   #. Create all necessary UI components to manage tags from the :guilabel:`Configuration` category
+      menu item.
+   #. Allow connecting properties to multiple tags, and tags to multiple properties.
+   #. Modify the form view of properties to display their associated tags. It should not be possible
+      to create new tags from the form view of properties.
+
+   .. tip::
+      Rely on the reference documentation for :ref:`the field component
+      <reference/view_architectures/form/field>` in form views to find a nice display for property
+      tags.
 
 .. spoiler:: Solution
 

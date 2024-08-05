@@ -23,7 +23,10 @@ they're evaluated at runtime, they can be used in the computation of default fie
 an updated value for each new record.
 
 .. todo: salesperson_id = fields.Many2one(default=lambda self: self.env.user)
-.. todo: real.estate.offer.amount -> default = property.selling_price
+.. todo: real.estate.offer.amount::default -> property.selling_price
+.. todo: real.estate.tag.color -> default=_default_color ;  def _default_color(self): return random.randint(1, 11)
+.. todo: 6,0,0 to associate tags to properties in data
+.. todo: unique tag
 
 .. todo: odoo-bin shell section
 
